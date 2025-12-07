@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: ui.ft.ccit.faculty.transaksi.TransaksiApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.608 s -- in ui.ft.ccit.faculty.transaksi.TransaksiApplicationTests
