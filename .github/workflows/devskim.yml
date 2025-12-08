@@ -1,0 +1,23 @@
+name: DevSkim Security Scan
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  devskim:
+    name: DevSkim Scan
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run DevSkim
+      uses: microsoft/DevSkim-Action@v1
