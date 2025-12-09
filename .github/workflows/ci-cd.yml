@@ -24,8 +24,8 @@ jobs:
         cache: maven
 
     - name: Build & Test (H2)
-      run: mvn clean package -DskipTests=false
-
+      run: mvn clean package -Dspring.profiles.active=test
+      
     - name: Build Docker Image
       run: docker build -t transaksi-app:latest .
 
