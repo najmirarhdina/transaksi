@@ -1,4 +1,4 @@
-name: CI/CD Build & Docker
+name: CI/CD - Spring Boot + MySQL + Docker
 
 on:
   push:
@@ -12,45 +12,70 @@ jobs:
     env:
       SPRING_PROFILES_ACTIVE: test
 
+    services:
+      mysql:
+        image: mysql:8.0
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: penjualan
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Java 25
-      uses: actions/setup-java@v4
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        cache: maven
+      - name: Setup Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
 
-    - name: Cache Maven dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven-
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..15}; do
+            if mysqladmin ping -h 127.0.0.1 -uroot -proot | grep 'mysqld is alive'; then
+              echo "MySQL is UP!"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 3
+          done
 
-    - name: Build and run tests
-      run: mvn clean package
+      - name: Import Database Schema
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot penjualan < db/penjualan.sql
 
-    - name: Build Docker image
-      run: |
-        docker build -t transaksi-app:latest .
+      - name: Build & Run Tests
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/penjualan
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: root
+        run: mvn -B clean package
 
-    - name: Run Docker container (detached)
-      run: |
-        docker run -d -p 8080:8080 --name transaksi-app transaksi-app:latest
+      - name: Build Docker Image
+        run: docker build -t transaksi-app:latest .
 
-    - name: Check application running
-      run: |
-        sleep 10
-        curl -f http://localhost:8080 || exit 1
+      - name: Run Docker Container
+        run: |
+          docker run -d -p 8080:8080 --name transaksi-app transaksi-app:latest
 
-    - name: Notify GitHub Status
-      if: success()
-      run: echo "✅ Build and tests successful!"
-    
-    - name: Notify GitHub Status on Failure
-      if: failure()
-      run: echo "❌ Build or tests failed!"
+      - name: Check Application Health
+        run: |
+          echo "Waiting for app to start..."
+          sleep 15
+          curl -f http://localhost:8080 || exit 1
+
+      - name: Notify Success
+        if: success()
+        run: echo "🎉 Build, Test, and Docker Deploy SUCCESS!"
+
+      - name: Notify Failure
+        if: failure()
+        run: echo "❌ Pipeline FAILED!"
