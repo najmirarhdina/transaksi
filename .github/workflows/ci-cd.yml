@@ -1,4 +1,4 @@
-name: CI/CD Build
+name: CI/CD Build & Docker
 
 on:
   push:
@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SPRING_PROFILES_ACTIVE: test
 
     steps:
     - name: Checkout repository
@@ -21,8 +23,34 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Build project with Maven
-      run: mvn -B clean package -DskipTests
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
 
-    - name: Run tests
-      run: mvn test
+    - name: Build and run tests
+      run: mvn clean package
+
+    - name: Build Docker image
+      run: |
+        docker build -t transaksi-app:latest .
+
+    - name: Run Docker container (detached)
+      run: |
+        docker run -d -p 8080:8080 --name transaksi-app transaksi-app:latest
+
+    - name: Check application running
+      run: |
+        sleep 10
+        curl -f http://localhost:8080 || exit 1
+
+    - name: Notify GitHub Status
+      if: success()
+      run: echo "✅ Build and tests successful!"
+    
+    - name: Notify GitHub Status on Failure
+      if: failure()
+      run: echo "❌ Build or tests failed!"
