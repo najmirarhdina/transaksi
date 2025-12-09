@@ -1,4 +1,4 @@
-name: CI/CD - Spring Boot + MySQL + Docker
+name: CI/CD Build & Docker (H2 Dummy)
 
 on:
   push:
@@ -12,70 +12,36 @@ jobs:
     env:
       SPRING_PROFILES_ACTIVE: test
 
-    services:
-      mysql:
-        image: mysql:8.0
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: penjualan
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Java 25
-        uses: actions/setup-java@v4
-        with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: maven
+    - name: Setup Java 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
 
-      - name: Wait for MySQL to be ready
-        run: |
-          for i in {1..15}; do
-            if mysqladmin ping -h 127.0.0.1 -uroot -proot | grep 'mysqld is alive'; then
-              echo "MySQL is UP!"
-              break
-            fi
-            echo "Waiting for MySQL..."
-            sleep 3
-          done
+    - name: Build & Test (H2)
+      run: mvn clean package -DskipTests=false
 
-      - name: Import Database Schema
-        run: |
-          mysql -h 127.0.0.1 -uroot -proot penjualan < db/penjualan.sql
+    - name: Build Docker Image
+      run: docker build -t transaksi-app:latest .
 
-      - name: Build & Run Tests
-        env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/penjualan
-          SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: root
-        run: mvn -B clean package
+    - name: Run Docker Container
+      run: docker run -d -p 8080:8080 --name transaksi-app transaksi-app:latest
 
-      - name: Build Docker Image
-        run: docker build -t transaksi-app:latest .
+    - name: Wait for App Startup
+      run: sleep 15
 
-      - name: Run Docker Container
-        run: |
-          docker run -d -p 8080:8080 --name transaksi-app transaksi-app:latest
+    - name: Check App Health
+      run: curl -f http://localhost:8080 || exit 1
 
-      - name: Check Application Health
-        run: |
-          echo "Waiting for app to start..."
-          sleep 15
-          curl -f http://localhost:8080 || exit 1
+    - name: Notify Success
+      if: success()
+      run: echo "🎉 CI/CD sukses! Build, test & docker semua OK!"
 
-      - name: Notify Success
-        if: success()
-        run: echo "🎉 Build, Test, and Docker Deploy SUCCESS!"
-
-      - name: Notify Failure
-        if: failure()
-        run: echo "❌ Pipeline FAILED!"
+    - name: Notify Failure
+      if: failure()
+      run: echo "❌ Ada error saat CI/CD berjalan!"
