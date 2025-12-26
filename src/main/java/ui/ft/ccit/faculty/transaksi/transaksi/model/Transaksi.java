@@ -1,7 +1,6 @@
 package ui.ft.ccit.faculty.transaksi.transaksi.model;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +22,9 @@ public class Transaksi {
     @Column(name = "id_karyawan", length = 4)
     private String idKaryawan;
 
-    // Relasi one-to-many ke detail transaksi
-    @OneToMany(mappedBy = "transaksi", cascade = CascadeType.ALL, orphanRemoval = true)
+    // ✅ TAMBAHKAN fetch = FetchType.EAGER
+    @OneToMany(mappedBy = "transaksi", cascade = CascadeType.ALL, 
+               orphanRemoval = true, fetch = FetchType.EAGER)
     private List<DetailTransaksi> details = new ArrayList<>();
 
     protected Transaksi() {

@@ -29,6 +29,7 @@ C:\transaksi\src\main\java\ui\ft\ccit\faculty\transaksi\transaksi\controller\Tra
 C:\transaksi\src\main\java\ui\ft\ccit\faculty\transaksi\transaksi\dto\TransaksiRequest.java
 C:\transaksi\src\main\java\ui\ft\ccit\faculty\transaksi\transaksi\model\DetailTransaksi.java
 C:\transaksi\src\main\java\ui\ft\ccit\faculty\transaksi\transaksi\model\DetailTransaksiId.java
+C:\transaksi\src\main\java\ui\ft\ccit\faculty\transaksi\transaksi\model\DetailTransaksiRepository.java
 C:\transaksi\src\main\java\ui\ft\ccit\faculty\transaksi\transaksi\model\Transaksi.java
 C:\transaksi\src\main\java\ui\ft\ccit\faculty\transaksi\transaksi\model\TransaksiRepository.java
 C:\transaksi\src\main\java\ui\ft\ccit\faculty\transaksi\transaksi\view\TransaksiService.java
