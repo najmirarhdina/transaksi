@@ -44,11 +44,11 @@ public class Pemasok {
         this.idPemasok = idPemasok;
     }
 
-    public String getNamaPemasok() {
+    public String getNama() {
         return namaPemasok;
     }
 
-    public void setNamaPemasok(String namaPemasok) {
+    public void setNama(String namaPemasok) {
         this.namaPemasok = namaPemasok;
     }
 
